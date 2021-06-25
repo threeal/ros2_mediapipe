@@ -39,6 +39,7 @@ class PoseDetector(Node):
 
     def image_callback(self, msg):
         mat = self.cv_bridge.imgmsg_to_cv2(msg)
+        mat = cv2.cvtColor(mat, cv2.COLOR_BGR2RGB)
 
         cv2.imshow('Pose Detector', mat)
         if cv2.waitKey(1) & 0xFF == 27:
