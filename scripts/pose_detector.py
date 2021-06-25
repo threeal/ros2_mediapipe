@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import argparse
 import cv2
 from cv_bridge.core import CvBridge
 import mediapipe as mp
@@ -30,10 +31,11 @@ from sensor_msgs.msg import Image
 
 class PoseDetector(Node):
 
-    def __init__(self):
-        super().__init__('pose_detector')
+    def __init__(self, **kwargs):
+        super().__init__(kwargs.get('node_name', 'pose_detector'))
+
         self.image_subscription = self.create_subscription(
-          Image, '/image_raw', self.image_callback, 10)
+          Image, kwargs.get('image_topic', '/image_raw'), self.image_callback, 10)
         self.image_subscription
 
         self.cv_bridge = CvBridge()
@@ -58,7 +60,26 @@ class PoseDetector(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    pose_detector = PoseDetector()
+    parser = argparse.ArgumentParser(prog='pose_detector')
+
+    parser.add_argument(
+        '--node-name',
+        nargs='?',
+        default='pose_detector',
+        help='node name to be used')
+
+    parser.add_argument(
+        '--image-topic',
+        nargs='?',
+        default='/image_raw',
+        help='name of the image topic')
+
+    options = parser.parse_args(args)
+
+    pose_detector = PoseDetector(
+        node_name=options.node_name,
+        image_topic=options.image_topic)
+
     rclpy.spin(pose_detector)
 
     rclpy.shutdown()

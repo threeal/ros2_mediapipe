@@ -12,6 +12,13 @@ jobs:
         with:
           path: ros2_mediapipe
 
+      - name: Add Debian repositories and rosdep sources list
+        run: |
+          sudo apt update && sudo apt install curl
+          curl -s http://repository.ichiro-its.org/debian/setup-nightly.bash | bash -s
+          curl -s http://repository.ichiro-its.org/debian/setup-threeal.bash | bash -s
+          curl -s http://repository.ichiro-its.org/rosdep/setup.bash | bash -s
+
       - name: Build Debian package
         uses: ichiro-its/ros2-build-debian-action@main
         with:
