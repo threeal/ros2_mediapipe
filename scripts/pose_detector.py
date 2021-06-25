@@ -22,6 +22,7 @@
 
 import cv2
 from cv_bridge.core import CvBridge
+import mediapipe as mp
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
@@ -36,13 +37,21 @@ class PoseDetector(Node):
         self.image_subscription
 
         self.cv_bridge = CvBridge()
+        self.pose = mp.solutions.pose.Pose(
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5)
 
     def image_callback(self, msg):
-        mat = self.cv_bridge.imgmsg_to_cv2(msg)
-        mat = cv2.cvtColor(mat, cv2.COLOR_BGR2RGB)
+        image = self.cv_bridge.imgmsg_to_cv2(msg)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        cv2.imshow('Pose Detector', mat)
-        if cv2.waitKey(1) & 0xFF == 27:
+        results = self.pose.process(image)
+
+        mp.solutions.drawing_utils.draw_landmarks(
+            image, results.pose_landmarks, mp.solutions.pose.POSE_CONNECTIONS)
+
+        cv2.imshow('Pose Detector', image)
+        if cv2.waitKey(5) & 0xFF == 27:
             rclpy.shutdown()
 
 
