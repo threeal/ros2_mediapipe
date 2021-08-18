@@ -27,6 +27,11 @@ import mediapipe as mp
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
+from vectors import Point, Vector
+
+
+def landmark_to_point(landmark):
+    return Point(landmark.x, landmark.y, landmark.z)
 
 
 class PoseDetector(Node):
@@ -48,6 +53,28 @@ class PoseDetector(Node):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         results = self.pose.process(image)
+
+        if results.pose_landmarks:
+            l_knee_landmark = results.pose_world_landmarks.landmark[25]
+            r_knee_landmark = results.pose_world_landmarks.landmark[26]
+
+            l_hip = landmark_to_point(results.pose_world_landmarks.landmark[23])
+            r_hip = landmark_to_point(results.pose_world_landmarks.landmark[24])
+            l_knee = landmark_to_point(l_knee_landmark)
+            r_knee = landmark_to_point(r_knee_landmark)
+            l_ankle = landmark_to_point(results.pose_world_landmarks.landmark[27])
+            r_ankle = landmark_to_point(results.pose_world_landmarks.landmark[28])
+
+            l_upper = Vector.from_points(l_knee, l_hip)
+            l_bottom = Vector.from_points(l_knee, l_ankle)
+            r_upper = Vector.from_points(r_knee, r_hip)
+            r_bottom = Vector.from_points(r_knee, r_ankle)
+
+            l_angle = l_bottom.angle(l_upper) if l_knee_landmark.visibility > 0.5 else -1
+            r_angle = r_bottom.angle(r_upper) if r_knee_landmark.visibility > 0.5 else -1
+
+            print("\033[2J\033[2H")
+            print("angle", l_angle, r_angle)
 
         mp.solutions.drawing_utils.draw_landmarks(
             image, results.pose_landmarks, mp.solutions.pose.POSE_CONNECTIONS)
